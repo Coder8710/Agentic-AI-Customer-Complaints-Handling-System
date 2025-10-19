@@ -61,7 +61,7 @@ This system helps companies save time and allows their customer support teams to
 Here’s the visual layout of your workflow 👇  
 
 **Workflow Overview Image:**  
-![Workflow](./AI workflow.png)  
+![Workflow Overview](AI_workflow.png)
 
 🧩 **Main Components:**  
 - Google Sheets Trigger  
