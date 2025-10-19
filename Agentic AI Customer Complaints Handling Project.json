@@ -1,0 +1,833 @@
+{
+  "name": "Agentic_AI_Customer_Escalation_project",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Escalated Query:\n\n<query>\n{{ $json.message }}\n</query>\n\n<ticketid>\n{{ $json['ticket id'] }}\n</ticketid>\n\n<email>\n{{ $json.email }}\n</email>\n\n<name>\n{{ $json.name }}\n</name>",
+        "options": {
+          "systemMessage": "=You are an Escalation Support AI Assistant.\nYour job is to read the escalated customer complaint and draft a clear, professional response for internal review by a human Customer Relations Manager (CRM).\n\nInstructions:\n\nAlways start by providing a concise summary of the customer's issue.\n\nInclude customer name , email , ticket ID and key details from the complaint.\n\nClearly state what the customer is upset about or requesting.\n\nBefore drafting your resolution, always call the 'order_tracking' tool to check for any available tracking information related to the customer’s order.\n\nBased on the complaint and sentiment, propose a resolution plan using the following policies:\n\n1.If the customer sounds slightly upset or dissatisfied, offer a 10% refund as compensation.\n\n2.If the customer explicitly mentions leaving a bad review or canceling future purchases, offer a 50% refund to retain them.\n\n3.If the item arrived with missing parts:\n\n  a. Offer to send the missing parts promptly.\n\n  b. If the customer seems very upset or frustrated, offer to send a new replacement item free of charge instead.\n\nAlways apologize sincerely, thank the customer for their patience, and reassure them that the issue will be resolved quickly.\n\nMaintain a tone that is empathetic, polite, and concise.\n\nOutput Format:\nYour response should contain two clearly separated sections:\n\n1. Summary:\nA short paragraph summarizing the customer’s issue, including their name, ticket ID, and order details.\n\n2. Resolution:\nPresent your proposed actions as a clear, structured list of number points (use bold headers for each point, like Refund, Replacement, Investigation, etc.).\n\nExample Output:\n\nSummary:\nCustomer Stephen (Ticket ID: #S12345 , email:stephen123@gmail.com) reported frustration regarding a non-functional delivery tracker, incorrect delivery date, and lack of communication about his watch order. The customer is very upset and mentioned leaving a bad review if not resolved quickly.\n\nResolution:\n\n1.50% Refund: Offer a 50% refund for the significant inconvenience and incorrect delivery date.\n\n2.Urgent Investigation: Investigate the incorrect tracking information for Order #S12345 immediately.\n\n3.Expedited Update: Provide the customer with a correct delivery date and active tracking link within 24 hours.\n\n4.Internal Escalation: Escalate to logistics to ensure accurate tracking data in future deliveries.\n\nThis draft will be reviewed by a human CRM before being sent to the customer."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        752,
+        0
+      ],
+      "id": "7361fc6f-b627-401f-b0ba-b1c08edf58e7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM",
+          "mode": "list",
+          "cachedResultName": "cs-escalations-sample",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 881669743,
+          "mode": "list",
+          "cachedResultName": "order_tracking",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM/edit#gid=881669743"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        992,
+        320
+      ],
+      "id": "345675b4-d6ce-470b-9641-81c574074b18",
+      "name": "order_tracking",
+      "credentials": {
+        "googleApi": {
+          "id": "YccSxVVuLVStllcq",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "omportfolio910@gmail.com",
+        "subject": "Approval Required",
+        "message": "=Your approval is required for the below:\n\n{{ $json.output }}\n\nPlease respond with any feedback and the status of your approval.",
+        "responseType": "freeText",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "f0415227-068f-4853-a16d-dc7cfd88d59b",
+      "name": "Send a message",
+      "webhookId": "REDACTED",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Y8zM7mlCzmwaVOqK",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "REDACTED",
+              "leftValue": "={{ $json.data.text }}",
+              "rightValue": "=approved|Approved",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1328,
+        0
+      ],
+      "id": "8e15c8cf-0765-450a-bba3-265db9b446fa",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## Escalated Query\n\n<query>\n{{ $('Google Sheets Trigger').item.json.message }}\n</query>\n\n<ticketid>\n{{ $('Google Sheets Trigger').item.json['ticket id'] }}\n</ticketid>\n\n<email>\n{{ $('Google Sheets Trigger').item.json['email'] }}\n</email>\n\n<name>\n{{ $('Google Sheets Trigger').item.json['name'] }}\n</name>\n\n## Proposed Resolution\n\n<proposed>\n{{ $('AI Agent').item.json.output }}\n</prosposed>\n\n## Human Feedback\n\n<human>\n{{ $json.data.text }}\n<human>",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are part of the Customer Escalations Team.\nYour task is to generate the final customer email for an approved escalation.\nYou will receive the ticket details, approved resolution, and CRM feedback.\n\nWrite a short, polite, and empathetic message that:\n\nClearly explains the resolution (refund, replacement, update, etc.)\n\nThanks the customer for their patience and understanding\n\nSounds professional and confident — this is the final communication with the customer.\n\nOutput your result in JSON format with two fields:\n\n{\n  \"email_subject\": \"Resolution for Your [Issue/Order ID]\",\n  \"email_body\": \"Dear [Customer Name],\\n[Short body explaining what was done and confirming resolution.]\\n\\nThank you for your patience and understanding.\\nBest regards,\\nCustomer Escalations Team\"\n}\n\n\nUse actual newlines (not “\\n” text) in the email body for proper formatting."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1568,
+        -400
+      ],
+      "id": "4cb13f4b-5fcb-4df9-8e3a-2b28145611d3",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        688,
+        320
+      ],
+      "id": "49e6e9b6-bb07-4529-bbd5-0d2dc561f680",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "R8H27TF357sM4cBt",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "omportfolio910@gmail.com",
+        "toEmail": "={{ $('Google Sheets Trigger').item.json.email }}",
+        "subject": "={{ $json.output.email_subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.output.email_body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1968,
+        -400
+      ],
+      "id": "4219baee-64d4-4fb3-8ed1-7cfabd51da13",
+      "name": "Send email",
+      "webhookId": "8d19aea8-25e6-420a-b231-f59509251eff",
+      "credentials": {
+        "smtp": {
+          "id": "ZuwrFnmMAekVfZxh",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        -176
+      ],
+      "id": "bb84a5e2-f757-4a4e-a5b9-b8900e46c2a2",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "R8H27TF357sM4cBt",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"email_subject\": \"Resolution for Your Order S12345\",\n  \"email_body\": \"Dear Stephen,\\n\\nWe have processed a 30% refund...\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1728,
+        -176
+      ],
+      "id": "1fab6ce5-f093-4c90-90a6-0e4682a5d5bc",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## Escalated Query\n\n<query>\n{{ $('Google Sheets Trigger').item.json.message }}\n</query>\n\n<ticketid>\n{{ $('Google Sheets Trigger').item.json['ticket id'] }}\n</ticketid>\n\n<email>\n{{ $('Google Sheets Trigger').item.json['email'] }}\n</email>\n\n<name>\n{{ $('Google Sheets Trigger').item.json['name'] }}\n</name>\n\n## Proposed Resolution\n\n<proposed>\n{{ $('AI Agent').item.json.output }}\n</prosposed>\n\n## Human Feedback\n\n<human>\n{{ $json.data.text }}\n<human>",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are part of the Customer Escalations Team.\nYou receive the original escalation ticket details, the customer’s request, and the final decision from the Customer Relationship Manager (CRM), which has been denied.\n\nYour task is to draft the final email to the customer explaining that their request could not be approved.\n\nThe message should be:\n\nPolite, empathetic, and professional\n\nShort and clear — no unnecessary detail\n\nRespectful — express understanding, but firmly communicate the final decision\n\nInclude a brief, customer-friendly reason if provided by the CRM\n\nReassure the customer that their feedback is valued\n\nOutput your result in JSON format with two fields:\n\n{\n  \"email_subject\": \"Update on Your Escalation Request [Ticket/Order ID]\",\n  \"email_body\": \"Dear [Customer Name],\\n\\nThank you for your patience while we reviewed your escalation request. After careful consideration, we’re unable to approve your request for [brief reason]. We understand this may be disappointing, and we truly value your understanding and feedback.\\n\\nIf you have any additional concerns, please don’t hesitate to reach out to us at our customer helpline.\\n\\nBest regards,\\nCustomer Escalations Team\"\n}\n\n\nUse actual line breaks (not “\\n”) in the email body for proper formatting."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        304
+      ],
+      "id": "99983f74-acb1-4e88-99b0-7943456d652a",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        560
+      ],
+      "id": "6f21fb5b-69da-4195-9630-966285eb2ff8",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "R8H27TF357sM4cBt",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"email_subject\": \"Resolution for Your Order S12345\",\n  \"email_body\": \"Dear Stephen,\\n\\nWe have processed a 30% refund...\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1760,
+        576
+      ],
+      "id": "e3631b3f-fcb5-486e-afe0-990bbbd43d71",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "fromEmail": "omportfolio910@gmail.com",
+        "toEmail": "={{ $('Google Sheets Trigger').item.json.email }}",
+        "subject": "={{ $json.output.email_subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.output.email_body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1920,
+        304
+      ],
+      "id": "922e6d01-68da-450b-a7fe-51a33f754715",
+      "name": "Send email1",
+      "webhookId": "e968455d-e634-4115-8609-e2404476a6f4",
+      "credentials": {
+        "smtp": {
+          "id": "ZuwrFnmMAekVfZxh",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM",
+          "mode": "list",
+          "cachedResultName": "cs-escalations-sample",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "main_sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM/edit#gid=0"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a730427b-97e8-4302-94ec-33e682701e7c",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "2GSszNj06HsYpoqA",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "03da61f8-124e-4670-a344-ad4fc51b0153",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM",
+          "mode": "list",
+          "cachedResultName": "cs-escalations-sample",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "main_sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "response": "={{ $('AI Agent1').item.json.output.email_body }}",
+            "proposed resolution": "={{ $('Send a message').item.json.data.text }}",
+            "approved": "yes",
+            "ticket id": "={{ $('Google Sheets Trigger').item.json['ticket id'] }}",
+            "status": "Closed"
+          },
+          "matchingColumns": [
+            "ticket id"
+          ],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ticket id",
+              "displayName": "ticket id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "proposed resolution",
+              "displayName": "proposed resolution",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "approved",
+              "displayName": "approved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "response",
+              "displayName": "response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2224,
+        -208
+      ],
+      "id": "b55e1a0e-c12e-4f67-8470-223b5e3c6bca",
+      "name": "Update row in main sheet ",
+      "credentials": {
+        "googleApi": {
+          "id": "YccSxVVuLVStllcq",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM",
+          "mode": "list",
+          "cachedResultName": "cs-escalations-sample",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "main_sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NegkvBesZP9fZHtaUuEl1-l038PeFURf9-WZUknrwQM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticket id": "={{ $('Google Sheets Trigger').item.json['ticket id'] }}",
+            "proposed resolution": "={{ $('Send a message').item.json.data.text }}",
+            "approved": "No",
+            "response": "={{ $('AI Agent2').item.json.output.email_body }}",
+            "status": "Closed"
+          },
+          "matchingColumns": [
+            "ticket id"
+          ],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ticket id",
+              "displayName": "ticket id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "proposed resolution",
+              "displayName": "proposed resolution",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "approved",
+              "displayName": "approved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "response",
+              "displayName": "response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2224,
+        48
+      ],
+      "id": "d0e48537-90d5-4f26-a590-db20dd88765e",
+      "name": "Update row in main sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "YccSxVVuLVStllcq",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "order_tracking": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email": {
+      "main": [
+        [
+          {
+            "node": "Update row in main sheet ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Send email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email1": {
+      "main": [
+        [
+          {
+            "node": "Update row in main sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in main sheet ": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in main sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "78b6c536-50f9-4328-bac8-f21fd3a71fde",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "04c16d8fe41c04459149640794bbc83183e986434faf718cd38e3f29433e91f1"
+  },
+  "id": "XIrs9nDT30QE9qyC",
+  "tags": []
+}
