@@ -42,7 +42,7 @@ This system helps companies save time and allows their customer support teams to
 5. **IF Node**  
    - Waits for feedback (Approve, Decline, Improve, or Worsen Resolution).  
 
-6. **AI Agent 1 (Approved cases/Approved but modify resolution)**  
+6. **AI Agent 1 (Approved cases/Approved but modified resolution)**  
    - Creates a final customer email if resolution is approved/modified.  
 
 7. **AI Agent 2 (Declined)**  
@@ -90,44 +90,40 @@ This visual flow ensures every complaint is processed end-to-end automatically.
 
 ## 🔑 **Setup Steps**
 
-1. **Install n8n**  
-   ```bash
-   npm install n8n -g
-   n8n start
-   ```
+1. **Open n8n**  
+   - Launch your **n8n instance** (either self-hosted or cloud).
 
-2. **Create Google Sheets Credentials**  
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)  
-   - Enable Google Sheets & Gmail API  
-   - Use credentials and connect them inside n8n  
+2. **Create a New Workflow**  
+   - In the top-right corner, click **“New Workflow”**.
 
-3. **Setup Sheets**  
-   - `main_sheet`: For storing customer details , complaints , status etc.
-   - `order_tracking`: For storing customer order details like delivery date etc.  
+3. **Import the Given Workflow File**  
+   - Click the **three dots** in the top-right corner.  
+   - Choose **“Import from File”**.  
+   - Select the provided JSON file (`Agentic AI Customer Complaints Handling Project.json`).  
+   - This will automatically load all **nodes and connections** shown in the workflow diagram.
 
-4. **Add Google Sheets Trigger Node**  
-   - Trigger: `on new row`  
-   - Interval: `every 1 minute`  
+4. **Set Up Required Credentials**  
+   After importing, you only need to configure credentials for the following services used in the workflow:
 
-5. **Add AI Agent (Google Gemini Chat Model)**  
-   - Connect to Gemini API  
-   - Use prompt to generate resolution and email draft  
+   - 🟢 **Google Sheets**  
+     - Used in nodes: **Google Sheets Trigger**, **order_tracking**, and **Update row in main sheet**.  
+     - Set up **Google Sheets credentials** with access to your complaint and order tracking sheets.
 
-6. **Add Gmail Node**  
-   - Configure to send emails from your official support address  
+   - ✉️ **Gmail**  
+     - Used in nodes: **Send a message**, **Send email**, and **Send email1**.  
+     - Add **Gmail credentials** to send emails from your official support address.
 
-7. **Add IF Node**  
-   - Conditions: Approved / Declined  
+   - 🤖 **Google Gemini AI**  
+     - Used in nodes: **AI Agent**, **AI Agent1**, and **AI Agent2**.  
+     - Provide your **Google Gemini API key** to enable AI-based response generation and resolution drafting.
 
-8. **Add AI Agent 1 & AI Agent 2**  
-   - Agent 1 → For Approved complaints/Approved but modify resolution 
-   - Agent 2 → For Declined complaints  
+5. **Save and Activate the Workflow**  
+   - Click **“Activate”** (top right).  
+   - The workflow will now automatically check your Google Sheet every minute for new complaints and process them using AI.
 
-9. **Add Update Row Node**  
-   - Update complaint status and AI output in the main sheet  
-
-10. **Activate Workflow**  
-    - Click “Activate” in n8n so it runs every minute automatically  
+6. **Test the Workflow**  
+   - Add a **new complaint entry** in your Google Sheet.  
+   - The AI should read the complaint, draft a **resolution email**, and update the sheet after sending messages.
 
 ---
 
