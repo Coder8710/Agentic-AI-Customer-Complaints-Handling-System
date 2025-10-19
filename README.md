@@ -58,7 +58,7 @@ This system helps companies save time and allows their customer support teams to
 
 ## 🖼 **Workflow Diagram Section**
 
-Here’s the visual layout of your workflow 👇  
+Here’s the visual layout of workflow 👇  
 
 **Workflow Overview Image:**  
 ![Workflow Overview](AI_workflow.png)
